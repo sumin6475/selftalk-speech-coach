@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SelfTalk — AI Speech Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: { 950: '#0a0b10', 900: '#0f1019', 850: '#14151f', 800: '#1a1b28', 700: '#252638', 600: '#34354d' },
+            accent: { 400: '#7c6af7', 500: '#6750e6', 600: '#5540c8' },
+            surface: { DEFAULT: '#16172280', elevated: '#1e1f2e80', floating: '#282940' },
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            body: ['"Inter"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #34354d; border-radius: 4px; }
+
+    /* Canvas glow */
+    .orb-glow {
+      position: absolute;
+      width: 340px; height: 340px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(103,80,230,0.18) 0%, transparent 70%);
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    /* Sidebar transition */
+    .sidebar-right {
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    }
+    .sidebar-right.collapsed {
+      width: 0 !important;
+      opacity: 0;
+      overflow: hidden;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    /* Btn spring hover */
+    .btn-spring {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    }
+    .btn-spring:hover { transform: scale(1.04); }
+    .btn-spring:active { transform: scale(0.97); }
+
+    /* Chat item hover */
+    .chat-item {
+      transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .chat-item:hover { background: #1e1f2e; transform: translateX(4px); }
+
+    /* Pulse ring animation */
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .pulse-ring {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* File drop zone */
+    .drop-zone {
+      border: 2px dashed #34354d;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #7c6af7;
+      background: rgba(103, 80, 230, 0.06);
+    }
+
+    /* SVG noise texture overlay */
+    .noise-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+  </style>
+</head>
+<body class="h-full bg-base-950 text-white overflow-hidden">
+  <div class="noise-overlay"></div>
+
+  <div class="flex h-full relative">
+
+    <!-- LEFT SIDEBAR: Chat History -->
+    <aside class="w-72 flex-shrink-0 border-r border-base-700/50 flex flex-col bg-base-900/60 backdrop-blur-sm">
+      <!-- Header -->
+      <div class="px-5 pt-6 pb-4">
+        <h2 class="font-display font-700 text-lg tracking-tight" style="letter-spacing:-0.03em;">Chat History</h2>
+        <p class="text-xs text-base-600 mt-1 font-body" style="line-height:1.7;">Continue your previous conversations</p>
+      </div>
+
+      <!-- New Chat Button -->
+      <div class="px-4 mb-3">
+        <button class="btn-spring w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent-500/15 text-accent-400 text-sm font-medium
+                       hover:bg-accent-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400 focus-visible:outline-offset-2
+                       active:bg-accent-500/30"
+                onclick="addNewChat()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Chat
+        </button>
+      </div>
+
+      <!-- Chat List -->
+      <div class="flex-1 overflow-y-auto px-3 pb-4 space-y-1" id="chatList">
+        <div class="chat-item rounded-xl px-3 py-3 cursor-pointer bg-base-800/60" data-active="true">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-accent-500/20 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-white truncate">Presentation Practice – Project Proposal</p>
+              <p class="text-xs text-base-600 mt-0.5">3 min ago</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-item rounded-xl px-3 py-3 cursor-pointer">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-base-700/50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-base-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-300 truncate">Mock Interview Practice</p>
+              <p class="text-xs text-base-600 mt-0.5">Yesterday</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-item rounded-xl px-3 py-3 cursor-pointer">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-base-700/50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-base-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-300 truncate">Business Meeting Conversation</p>
+              <p class="text-xs text-base-600 mt-0.5">3 days ago</p>
+            </div>
+          </div>
+        </div>
+        <div class="chat-item rounded-xl px-3 py-3 cursor-pointer">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-base-700/50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-base-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8"/></svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-300 truncate">Speech Tone Coaching</p>
+              <p class="text-xs text-base-600 mt-0.5">1 week ago</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Voice Agent -->
+    <main class="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+      <!-- Background radial gradients -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+             style="background: radial-gradient(circle, rgba(103,80,230,0.08) 0%, transparent 60%);"></div>
+        <div class="absolute top-1/4 left-1/3 w-[400px] h-[400px] rounded-full"
+             style="background: radial-gradient(circle, rgba(124,106,247,0.05) 0%, transparent 50%);"></div>
+      </div>
+
+      <!-- Orb Visualization -->
+      <div class="relative flex items-center justify-center mb-10" id="orbContainer">
+        <div class="orb-glow" id="orbGlow"></div>
+        <canvas id="orbCanvas" width="280" height="280" class="relative z-10"></canvas>
+        <!-- Pulse rings (visible when active) -->
+        <div class="absolute w-72 h-72 rounded-full border border-accent-500/20 pulse-ring hidden" id="pulseRing1"></div>
+        <div class="absolute w-72 h-72 rounded-full border border-accent-500/10 pulse-ring hidden" id="pulseRing2" style="animation-delay: 0.8s;"></div>
+      </div>
+
+      <!-- Status Text -->
+      <p class="text-base-600 text-sm mb-8 font-body tracking-wide" id="statusText">Press the button below to start a conversation</p>
+
+      <!-- Start / Stop Button -->
+      <button id="talkBtn"
+              class="btn-spring relative px-8 py-4 rounded-2xl font-medium text-base
+                     bg-accent-500 text-white
+                     hover:bg-accent-400
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400 focus-visible:outline-offset-4
+                     active:bg-accent-600"
+              style="box-shadow: 0 4px 24px rgba(103,80,230,0.3), 0 1px 4px rgba(103,80,230,0.2);"
+              onclick="toggleConversation()">
+        <span class="flex items-center gap-3">
+          <svg id="micIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg>
+          <span id="btnLabel">Start Conversation</span>
+        </span>
+      </button>
+
+      <!-- Toggle Right Panel Button -->
+      <button id="toggleRightBtn"
+              class="absolute top-5 right-5 p-2.5 rounded-xl bg-base-800/60 text-base-600
+                     hover:bg-base-700/60 hover:text-white
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400 focus-visible:outline-offset-2
+                     active:bg-base-700/80
+                     transition-colors duration-200"
+              onclick="toggleRightPanel()"
+              title="Toggle reference panel">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </button>
+    </main>
+
+    <!-- RIGHT SIDEBAR: Reference Files -->
+    <aside class="sidebar-right w-80 flex-shrink-0 border-l border-base-700/50 flex flex-col bg-base-900/60 backdrop-blur-sm" id="rightPanel">
+      <!-- Header -->
+      <div class="px-5 pt-6 pb-4 flex items-center justify-between">
+        <div>
+          <h2 class="font-display font-700 text-lg tracking-tight" style="letter-spacing:-0.03em;">References</h2>
+          <p class="text-xs text-base-600 mt-1 font-body" style="line-height:1.7;">Add context for the conversation</p>
+        </div>
+        <button class="p-1.5 rounded-lg text-base-600 hover:text-white hover:bg-base-700/50
+                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400
+                       transition-colors duration-200"
+                onclick="toggleRightPanel()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Text Input -->
+      <div class="flex-1 flex flex-col px-4 pb-4">
+        <textarea id="refTextarea"
+                  class="w-full flex-1 rounded-xl bg-base-800/80 border border-base-700/50 px-4 py-3 text-sm text-gray-200 resize-none
+                         placeholder:text-base-600
+                         focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/20
+                         transition-colors duration-200"
+                  style="line-height:1.7; min-height:200px;"
+                  maxlength="8000"
+                  placeholder="Paste reference text here..."
+                  oninput="updateCharCount()"></textarea>
+        <div class="flex items-center justify-end mt-2">
+          <span id="charCount" class="text-xs text-base-600 tabular-nums">0 / 8,000</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // ─── State ───
+    let isActive = false;
+    let rightPanelOpen = true;
+    let animFrameId = null;
+
+    // ─── Right Panel Toggle ───
+    function toggleRightPanel() {
+      const panel = document.getElementById('rightPanel');
+      rightPanelOpen = !rightPanelOpen;
+      if (rightPanelOpen) {
+        panel.classList.remove('collapsed');
+      } else {
+        panel.classList.add('collapsed');
+      }
+    }
+
+    // ─── Conversation Toggle ───
+    function toggleConversation() {
+      isActive = !isActive;
+      const btn = document.getElementById('talkBtn');
+      const label = document.getElementById('btnLabel');
+      const status = document.getElementById('statusText');
+      const ring1 = document.getElementById('pulseRing1');
+      const ring2 = document.getElementById('pulseRing2');
+
+      if (isActive) {
+        label.textContent = 'End Conversation';
+        status.textContent = 'Listening...';
+        btn.classList.remove('bg-accent-500', 'hover:bg-accent-400', 'active:bg-accent-600');
+        btn.classList.add('bg-red-500/90', 'hover:bg-red-400/90', 'active:bg-red-600/90');
+        btn.style.boxShadow = '0 4px 24px rgba(239,68,68,0.3), 0 1px 4px rgba(239,68,68,0.2)';
+        ring1.classList.remove('hidden');
+        ring2.classList.remove('hidden');
+      } else {
+        label.textContent = 'Start Conversation';
+        status.textContent = 'Press the button below to start a conversation';
+        btn.classList.remove('bg-red-500/90', 'hover:bg-red-400/90', 'active:bg-red-600/90');
+        btn.classList.add('bg-accent-500', 'hover:bg-accent-400', 'active:bg-accent-600');
+        btn.style.boxShadow = '0 4px 24px rgba(103,80,230,0.3), 0 1px 4px rgba(103,80,230,0.2)';
+        ring1.classList.add('hidden');
+        ring2.classList.add('hidden');
+      }
+    }
+
+    // ─── Orb Canvas Animation ───
+    const canvas = document.getElementById('orbCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+
+    function drawOrb(time) {
+      ctx.clearRect(0, 0, W, H);
+      const t = time * 0.001;
+      const baseRadius = isActive ? 90 : 80;
+      const amplitude = isActive ? 18 : 6;
+      const speed = isActive ? 1.8 : 0.6;
+
+      // Multiple layered shapes
+      for (let layer = 3; layer >= 0; layer--) {
+        const layerOffset = layer * 0.7;
+        const layerAlpha = 0.06 + (3 - layer) * 0.06;
+        const r = baseRadius + layer * 8;
+
+        ctx.beginPath();
+        const points = 128;
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const noise = Math.sin(angle * 3 + t * speed + layerOffset) * amplitude * 0.6
+                      + Math.sin(angle * 5 - t * speed * 0.7 + layerOffset) * amplitude * 0.3
+                      + Math.sin(angle * 7 + t * speed * 1.3 + layerOffset) * amplitude * 0.15;
+          const radius = r + noise;
+          const x = cx + Math.cos(angle) * radius;
+          const y = cy + Math.sin(angle) * radius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+
+        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r + amplitude);
+        gradient.addColorStop(0, `rgba(124, 106, 247, ${layerAlpha + 0.12})`);
+        gradient.addColorStop(0.6, `rgba(103, 80, 230, ${layerAlpha + 0.04})`);
+        gradient.addColorStop(1, `rgba(85, 64, 200, ${layerAlpha})`);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+
+      // Inner bright core
+      const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);
+      coreGrad.addColorStop(0, isActive ? 'rgba(180, 170, 255, 0.25)' : 'rgba(180, 170, 255, 0.12)');
+      coreGrad.addColorStop(1, 'rgba(103, 80, 230, 0)');
+      ctx.beginPath();
+      ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+      ctx.fillStyle = coreGrad;
+      ctx.fill();
+
+      animFrameId = requestAnimationFrame(drawOrb);
+    }
+    animFrameId = requestAnimationFrame(drawOrb);
+
+    // ─── Character Count ───
+    function updateCharCount() {
+      const textarea = document.getElementById('refTextarea');
+      const counter = document.getElementById('charCount');
+      const len = textarea.value.length;
+      counter.textContent = len.toLocaleString() + ' / 8,000';
+      if (len >= 8000) {
+        counter.classList.add('text-red-400');
+        counter.classList.remove('text-base-600');
+      } else if (len >= 7000) {
+        counter.classList.add('text-yellow-400');
+        counter.classList.remove('text-base-600', 'text-red-400');
+      } else {
+        counter.classList.add('text-base-600');
+        counter.classList.remove('text-red-400', 'text-yellow-400');
+      }
+    }
+
+    // ─── New Chat ───
+    function addNewChat() {
+      const list = document.getElementById('chatList');
+      // Deactivate all
+      list.querySelectorAll('.chat-item').forEach(el => {
+        el.dataset.active = 'false';
+        el.classList.remove('bg-base-800/60');
+      });
+      const item = document.createElement('div');
+      item.className = 'chat-item rounded-xl px-3 py-3 cursor-pointer bg-base-800/60';
+      item.dataset.active = 'true';
+      const now = new Date();
+      item.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-accent-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-white truncate">New Conversation</p>
+            <p class="text-xs text-base-600 mt-0.5">Just now</p>
+          </div>
+        </div>
+      `;
+      list.prepend(item);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SelfTalk — AI Speech Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: {
+              950: 'var(--bg-page)',
+              900: 'var(--bg-surface)',
+              850: 'var(--bg-subtle)',
+              800: 'var(--bg-subtle)',
+              700: 'var(--border-default)',
+              600: 'var(--text-muted)',
+            },
+            accent: {
+              400: 'var(--accent-soft)',
+              500: 'var(--accent)',
+              600: 'var(--accent-hover)',
+            },
+          },
+          fontFamily: {
+            display: ['"Inter"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="h-full bg-base-950 text-[color:var(--text-primary)] overflow-hidden">
+  <div class="noise-overlay"></div>
+
+  <div class="flex h-full relative">
+
+    <!-- LEFT SIDEBAR: Scenarios + History (~18%) -->
+    <aside class="w-[18%] min-w-[220px] max-w-[300px] flex-shrink-0 border-r border-base-700/50 flex flex-col bg-base-900/60 backdrop-blur-sm">
+      <!-- Logo -->
+      <div class="px-5 pt-5 pb-4">
+        <a href="#" id="logoBtn" class="text-[17px] text-[color:var(--text-primary)] hover:text-accent-500 transition-colors" style="font-family:'Inter',sans-serif; font-weight:900; text-decoration:none; letter-spacing:-0.02em;">
+          Speaking Coach
+        </a>
+      </div>
+
+      <!-- Scenarios -->
+      <div class="px-4 pb-3">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600 mb-2.5 px-1">Scenarios</p>
+        <div class="space-y-1.5" id="scenarioList">
+          <div class="scenario-card active" data-scenario="persuade">
+            <p class="text-sm font-medium">Persuade / Propose</p>
+            <p class="text-[11px] text-base-600 mt-0.5">Pitches, proposals, business meetings</p>
+          </div>
+          <div class="scenario-card" data-scenario="explain">
+            <p class="text-sm font-medium">Explain / Report</p>
+            <p class="text-[11px] text-base-600 mt-0.5">Paper presentations, tech briefings, reports</p>
+          </div>
+          <div class="scenario-card" data-scenario="storytelling">
+            <p class="text-sm font-medium">Storytelling</p>
+            <p class="text-[11px] text-base-600 mt-0.5">Founding stories, interview intros, demos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="mx-4 border-t border-base-700/40"></div>
+
+      <!-- History -->
+      <div class="flex-1 flex flex-col min-h-0 px-4 pt-3 pb-4">
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600 mb-2.5 px-1">History</p>
+        <div class="flex-1 overflow-y-auto space-y-1" id="chatList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- My Page + Settings -->
+      <div class="px-4 pb-4 pt-2 border-t border-base-700/40 space-y-1">
+        <button id="myPageBtn" class="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-base-600 hover:text-[color:var(--text-secondary)] hover:bg-base-800/60 transition-colors text-xs" style="border:none; background:none; cursor:pointer;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span>My Page</span>
+        </button>
+        <button id="settingsBtn" class="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-base-600 hover:text-[color:var(--text-secondary)] hover:bg-base-800/60 transition-colors text-xs" style="border:none; background:none; cursor:pointer;">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CENTER: Voice Agent (~55%) -->
+    <main class="flex-1 flex flex-col items-center justify-center relative overflow-hidden">
+
+      <!-- ═══ Session Start View (shown in idle, before session) ═══ -->
+      <div id="sessionStartView" class="hidden flex flex-col items-center justify-center flex-1 w-full relative px-8">
+        <!-- Selected scenario badge -->
+        <div class="mb-4">
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600 mb-1.5 text-center">Selected scenario</p>
+          <div class="inline-flex items-center px-3 py-1 rounded-full border border-accent-500/30 bg-accent-500/5">
+            <span id="startViewScenarioLabel" class="text-sm text-accent-400 font-medium">Persuade / Propose</span>
+          </div>
+        </div>
+
+        <!-- Scenario description -->
+        <div id="scenarioDescription" class="w-full mb-8" style="max-width: 600px;">
+          <div class="scenario-img-wrap">
+            <img id="scenarioImage" src="/images/persuade.png" class="scenario-img" alt="" />
+          </div>
+        </div>
+
+        <!-- Start session button (glass) -->
+        <div class="glass-button-wrap" id="startSessionWrap">
+          <button id="startSessionBtn" class="glass-button">
+            <span class="glass-button-text flex items-center gap-3">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg>
+              <span class="font-medium text-[15px]">Start session</span>
+            </span>
+          </button>
+          <div class="glass-button-shadow rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- ═══ Voice View (shown during active session) ═══ -->
+      <div id="voiceView" class="hidden flex flex-col items-center justify-center flex-1 w-full relative">
+        <!-- Session timer -->
+        <div id="sessionTimer" class="hidden absolute top-5 left-6 flex items-center gap-2 text-sm tabular-nums">
+          <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+          <span class="text-base-600"><span id="timerDisplay">0:00</span> / 10:00</span>
+        </div>
+
+        <!-- Background radial gradients -->
+        <div class="absolute inset-0 pointer-events-none">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+               style="background: radial-gradient(circle, rgba(108,92,231,0.1) 0%, transparent 60%);"></div>
+        </div>
+
+        <!-- Session tags above orb -->
+        <div id="sessionTags" class="flex items-center gap-2 mb-4">
+          <span id="tagScenario" class="session-tag hidden"></span>
+          <span id="tagMode" class="session-tag hidden"></span>
+        </div>
+
+        <!-- Orb Visualization -->
+        <div class="relative flex items-center justify-center mb-6" id="orbContainer">
+          <div class="orb-glow"></div>
+          <canvas id="orbCanvas" width="280" height="280" class="relative z-10"></canvas>
+          <div class="absolute w-72 h-72 rounded-full border border-accent-500/20 pulse-ring hidden" id="pulseRing1"></div>
+          <div class="absolute w-72 h-72 rounded-full border border-accent-500/10 pulse-ring hidden" id="pulseRing2" style="animation-delay: 0.8s;"></div>
+        </div>
+
+        <!-- (transcript moved to right panel) -->
+        <div id="transcriptArea" class="hidden"></div>
+
+        <!-- Status Text -->
+        <div class="flex items-center gap-2 mb-6">
+          <div id="statusDot" class="hidden w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+          <p class="text-base-600 text-sm font-body tracking-wide" id="statusText"></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-3">
+          <!-- Help me say this -->
+          <button id="helpBtn" class="hidden help-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <span>Help me say this</span>
+          </button>
+
+          <!-- End Session Button -->
+          <button id="talkBtn" class="hidden action-btn action-btn--stop group relative overflow-hidden">
+            <div class="action-btn__glow"></div>
+            <span class="action-btn__content relative z-10 flex items-center gap-3">
+              <span class="action-btn__icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg>
+              </span>
+              <span id="btnLabel" class="font-medium text-[15px] tracking-wide">End Session</span>
+            </span>
+          </button>
+
+          <!-- End Practice Button (Full Run only) -->
+          <button id="endPracticeBtn" class="hidden action-btn action-btn--practice group relative overflow-hidden">
+            <div class="action-btn__glow"></div>
+            <span class="action-btn__content relative z-10 flex items-center gap-2.5">
+              <span class="action-btn__icon">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+              </span>
+              <span class="font-medium text-[15px] tracking-wide">End Practice</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- Help Panel (slides up from bottom) -->
+        <div id="helpPanel" class="hidden help-panel">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-[color:var(--text-secondary)]">Help me say this</span>
+            <button id="helpPanelClose" class="p-1 rounded text-base-600 hover:text-[color:var(--text-primary)]" style="background:none; border:none; cursor:pointer;">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <input id="helpInput" type="text" class="help-input flex-1" placeholder="한국어로 입력하세요..." />
+            <button id="helpSendBtn" class="help-send-btn">Send</button>
+          </div>
+          <div id="helpResults" class="help-results"></div>
+          <button id="helpBackBtn" class="help-back-btn mt-3 w-full">Back to practice</button>
+        </div>
+      </div>
+
+      <!-- ═══ Chat Log View (shown after session complete or viewing history) ═══ -->
+      <div id="chatLogView" class="hidden flex flex-col w-full h-full">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-base-700/50">
+          <div class="flex items-center gap-3">
+            <button id="backToVoiceBtn"
+                    class="p-2 rounded-lg text-base-600 hover:text-[color:var(--text-primary)] hover:bg-base-700/50 transition-colors duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </button>
+            <h3 class="font-medium text-sm" id="chatLogTitle">Session Log</h3>
+          </div>
+        </div>
+
+        <!-- Chat messages -->
+        <div id="chatLogMessages" class="flex-1 overflow-y-auto px-6 py-4 space-y-3 transcript-area">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Bottom: New Conversation button -->
+        <div class="px-6 py-4 border-t border-base-700/50 flex justify-center">
+          <button id="newConversationBtn" class="action-btn action-btn--start" style="padding: 10px 24px;">
+            <span class="action-btn__content relative z-10 flex items-center gap-2.5">
+              <span class="action-btn__icon" style="width:28px;height:28px;border-radius:8px;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </span>
+              <span class="font-medium text-sm tracking-wide">New Conversation</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ My Page View ═══ -->
+      <div id="myPageView" class="hidden flex flex-col w-full h-full">
+        <!-- Header -->
+        <div class="flex items-center gap-4 px-6 py-4 border-b border-base-700/50">
+          <button id="myPageBackBtn" class="p-2 rounded-lg text-base-600 hover:text-[color:var(--text-primary)] hover:bg-base-700/50 transition-colors duration-200" style="border:none; background:none; cursor:pointer;">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </button>
+          <h2 class="font-display font-700 text-lg" style="letter-spacing:-0.03em;">My Page</h2>
+          <div class="flex bg-base-800/80 rounded-lg p-0.5 ml-4" id="myPageTabs">
+            <button class="mypage-tab active" data-mypage-tab="notes">Notes</button>
+            <button class="mypage-tab" data-mypage-tab="dashboard" disabled>Dashboard</button>
+          </div>
+        </div>
+
+        <!-- Notes section -->
+        <div id="myPageNotesSection" class="flex-1 flex min-h-0">
+          <!-- Notes list -->
+          <div class="w-[280px] flex-shrink-0 border-r border-base-700/50 flex flex-col">
+            <div class="px-4 pt-4 pb-3 flex items-center justify-between">
+              <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600">Notes</p>
+              <button id="newNoteBtn" class="p-1.5 rounded-lg text-base-600 hover:text-accent-400 hover:bg-accent-500/10 transition-colors" style="border:none; background:none; cursor:pointer;" title="New note">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              </button>
+            </div>
+            <div id="notesList" class="flex-1 overflow-y-auto px-2 pb-4 space-y-1"></div>
+          </div>
+
+          <!-- Note editor -->
+          <div class="flex-1 flex flex-col min-w-0">
+            <!-- Empty state -->
+            <div id="noteEmptyState" class="flex-1 flex items-center justify-center">
+              <div class="text-center">
+                <p class="text-base-600 text-sm mb-2">Select a note or create a new one</p>
+                <button id="newNoteBtnEmpty" class="text-accent-400 text-sm hover:underline cursor-pointer" style="border:none; background:none;">+ New Note</button>
+              </div>
+            </div>
+
+            <!-- Editor -->
+            <div id="noteEditor" class="hidden flex-1 flex flex-col">
+              <div class="px-6 pt-4 pb-2 flex items-center justify-between">
+                <input id="noteTitleInput" type="text" placeholder="Note title"
+                       class="flex-1 bg-transparent border-none outline-none text-lg font-medium text-[color:var(--text-primary)] placeholder:text-base-600" maxlength="200" />
+                <div class="flex items-center gap-2">
+                  <button id="noteCopyBtn" class="note-action-btn" title="Copy to clipboard">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  </button>
+                  <button id="noteUseBtn" class="note-use-btn">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    <span>Use in session</span>
+                  </button>
+                  <button id="noteSaveBtn" class="note-save-btn" title="Save note">
+                    Save
+                  </button>
+                  <button id="noteDeleteBtn" class="note-action-btn" title="Delete note" style="color:var(--text-muted);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="px-6 pb-1">
+                <p id="noteTimestamp" class="text-[11px] text-base-600"></p>
+              </div>
+              <div class="flex-1 px-6 py-3">
+                <textarea id="noteContentInput"
+                          class="w-full h-full bg-transparent border-none outline-none text-sm text-[color:var(--text-primary)] placeholder:text-base-600 resize-none"
+                          style="line-height:1.7;"
+                          placeholder="Write your notes here..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard placeholder -->
+        <div id="myPageDashboardSection" class="hidden flex-1 flex items-center justify-center">
+          <p class="text-base-600 text-sm">Dashboard coming soon</p>
+        </div>
+      </div>
+
+      <!-- Toggle Right Panel Button -->
+      <button id="toggleRightBtn"
+              class="absolute top-5 right-0 z-10 p-2.5 rounded-l-xl
+                     bg-base-800/80 text-base-600 border border-r-0 border-base-700/50
+                     hover:bg-base-700/70 hover:text-[color:var(--text-primary)]
+                     active:bg-base-700/80
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400 focus-visible:outline-offset-2
+                     transition-all duration-200"
+              title="Toggle reference panel">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </button>
+    </main>
+
+    <!-- RIGHT SIDEBAR: References + Checklist (~27%) -->
+    <aside class="sidebar-right w-[27%] min-w-[260px] max-w-[380px] flex-shrink-0 border-l border-base-700/50 flex flex-col bg-base-900/60 backdrop-blur-sm" id="rightPanel">
+      <!-- Tab toggle + close -->
+      <div class="px-4 pt-5 pb-3 flex items-center justify-between">
+        <div class="flex bg-base-800/80 rounded-lg p-0.5" id="rightPanelTabs">
+          <button class="right-tab active" data-tab="references">References</button>
+          <button class="right-tab" data-tab="checklist">Checklist</button>
+        </div>
+        <button data-close
+                class="p-1.5 rounded-lg text-base-600 hover:text-[color:var(--text-primary)] hover:bg-base-700/50 transition-colors duration-200"
+                onclick="document.getElementById('rightPanel').classList.add('collapsed')">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- References tab content -->
+      <div id="tabReferences" class="flex-1 flex flex-col px-4 pb-4 overflow-y-auto">
+
+        <!-- ═══ Edit view (default) ═══ -->
+        <div id="refEditView">
+          <textarea id="refTextarea"
+                    class="ref-textarea w-full rounded-xl bg-base-800/80 border border-base-700/50 px-4 py-3 text-sm text-[color:var(--text-primary)] resize-none
+                           placeholder:text-base-600
+                           focus:outline-none focus:border-accent-500/50 focus:ring-1 focus:ring-accent-500/20
+                           transition-all duration-200"
+                    style="line-height:1.7; min-height:160px;"
+                    maxlength="8000"
+                    placeholder="Paste your speech notes, script, or key points here..."></textarea>
+          <div class="flex items-center justify-between mt-2">
+            <button id="translateBtn" class="ref-translate-btn hidden">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+              <span id="translateBtnLabel">Translate to English</span>
+            </button>
+            <span id="charCount" class="text-xs text-base-600 tabular-nums ml-auto">0 / 8,000</span>
+          </div>
+
+          <!-- Transform controls -->
+          <div id="refTransformControls">
+            <!-- Mode pills -->
+            <div class="flex gap-2 mt-3" id="transformModePills">
+              <button class="ref-mode-pill flex-1" data-transform-mode="easy">Easy</button>
+              <button class="ref-mode-pill flex-1" data-transform-mode="professional">Professional</button>
+            </div>
+
+            <!-- Generate button -->
+            <button id="transformBtn" class="ref-transform-btn mt-3 w-full" disabled>
+              <span id="transformBtnLabel">Simplify for speaking</span>
+            </button>
+
+            <p class="text-[11px] text-[color:var(--text-subtle)] mt-2">Rewrites your notes into speech-friendly language. Original is saved.</p>
+          </div>
+
+          <!-- Use as-is button -->
+          <button id="useAsIsBtn" class="ref-action-btn ref-action-btn--accent mt-3 w-full hidden">Use this version</button>
+        </div>
+
+        <!-- ═══ Transformed view (shown after generation) ═══ -->
+        <div id="refTransformedView" class="hidden">
+          <!-- Version bar -->
+          <div class="flex items-center justify-between mb-3">
+            <span id="refVersionBadge" class="ref-version-badge"></span>
+            <button id="refToggleOriginal" class="text-[11px] text-base-600 underline cursor-pointer hover:text-[color:var(--text-secondary)]" style="background:none; border:none;">Show original</button>
+          </div>
+
+          <!-- Transformed text display -->
+          <div id="refTransformedText"
+               class="w-full rounded-xl bg-base-800/80 border border-base-700/50 px-4 py-3 text-sm text-[color:var(--text-primary)]"
+               style="line-height:1.7; min-height:160px; max-height:50vh; overflow-y:auto; white-space:pre-wrap;"></div>
+          <div class="flex items-center justify-end mt-2">
+            <span id="charCountTransformed" class="text-xs text-base-600 tabular-nums"></span>
+          </div>
+
+          <!-- Bottom buttons -->
+          <div class="flex gap-2 mt-3">
+            <button id="refBackToOriginal" class="ref-action-btn ref-action-btn--ghost flex-1">Back to original</button>
+            <button id="refUseTransformed" class="ref-action-btn ref-action-btn--accent flex-1">Use this version</button>
+          </div>
+          <p class="text-[11px] text-[color:var(--text-subtle)] mt-2">This version will be sent to the AI coach. You can switch back anytime before starting.</p>
+        </div>
+
+        <!-- Drill Expressions setup -->
+        <div id="drillExpressionsSetup" class="mt-4 pt-4 border-t border-base-700/40">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600">Drill Expressions</p>
+            <span id="drillExprCount" class="text-[10px] text-base-600"></span>
+          </div>
+          <div class="flex gap-2 mb-2">
+            <input id="drillExprInput" type="text"
+                   class="flex-1 bg-base-800/80 border border-base-700/50 rounded-lg px-3 py-2 text-sm text-[color:var(--text-primary)] placeholder:text-base-600 focus:outline-none focus:border-accent-500/50"
+                   placeholder="e.g. bear in mind" maxlength="200" />
+            <button id="drillExprAddBtn" class="drill-add-btn">Add</button>
+          </div>
+          <input id="drillExprHintInput" type="text"
+                 class="hidden w-full bg-base-800/40 border border-base-700/30 rounded-lg px-3 py-1.5 text-xs text-[color:var(--text-primary)] placeholder:text-base-600 focus:outline-none focus:border-accent-500/30 mb-2"
+                 placeholder="Korean hint (optional)" maxlength="100" />
+          <div id="drillExprList" class="space-y-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Checklist tab content -->
+      <div id="tabChecklist" class="hidden flex-1 flex flex-col min-h-0 px-4 pb-4 overflow-hidden">
+        <!-- Drill expressions during session -->
+        <div id="drillExpressionsLive" class="hidden mb-3 pb-3 border-b border-base-700/40">
+          <p class="text-[10px] font-semibold uppercase tracking-widest mb-2">
+            <span class="text-accent-400">DRILLING NOW</span>
+          </p>
+          <div id="drillExprLiveList" class="space-y-1.5"></div>
+        </div>
+
+        <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600 mb-2" id="checklistLabel">Tips</p>
+        <div id="checklistItems" class="space-y-1.5 overflow-y-auto flex-1"
+             style="scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;">
+        </div>
+
+        <!-- Transcript section (inside checklist tab) -->
+        <div class="mt-3 pt-3 border-t border-base-700/40 flex-1 flex flex-col min-h-0">
+          <p class="text-[10px] font-semibold uppercase tracking-widest text-base-600 mb-2">Transcript</p>
+          <div id="transcriptPanel" class="flex-1 overflow-y-auto space-y-2.5 transcript-area">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="bg-base-850 rounded-2xl p-6 max-w-md w-full mx-4 border border-base-700/50 relative"
+         style="box-shadow: 0 24px 80px rgba(17,12,46,0.15);">
+      <button id="settingsClose"
+              class="absolute top-4 right-4 p-1.5 rounded-lg text-base-600 hover:text-[color:var(--text-primary)] hover:bg-base-700/50 transition-colors duration-200"
+              style="border:none; background:none; cursor:pointer;">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <h3 class="font-display font-700 text-lg mb-1" style="letter-spacing:-0.03em;">Settings</h3>
+      <p class="text-xs text-base-600 mb-5">Beta features can be toggled on or off</p>
+
+      <div class="space-y-4">
+        <!-- Session Summary toggle -->
+        <label class="settings-toggle-row">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-[color:var(--text-secondary)]">Session Summary</span>
+            </div>
+            <p class="text-[11px] text-base-600 mt-0.5">Generates summary, title, and model script after session ends</p>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="betaSummaryToggle" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+
+        <!-- AI Checklist toggle -->
+        <label class="settings-toggle-row">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-[color:var(--text-secondary)]">AI Checklist</span>
+              <span class="beta-badge">Beta</span>
+            </div>
+            <p class="text-[11px] text-base-600 mt-0.5">AI automatically checks items during practice</p>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="betaChecklistToggle" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+
+        <!-- Help Me Say This toggle -->
+        <label class="settings-toggle-row">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-[color:var(--text-secondary)]">Help Me Say This</span>
+              <span class="beta-badge">Beta</span>
+            </div>
+            <p class="text-[11px] text-base-600 mt-0.5">Korean-to-English expression helper during sessions</p>
+          </div>
+          <div class="toggle-switch">
+            <input type="checkbox" id="betaHelpToggle" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+      </div>
+
+      <!-- Coaching Style -->
+      <div class="mt-5 pt-4" style="border-top: 1px solid var(--border-default);">
+        <p class="text-sm font-medium text-[color:var(--text-secondary)] mb-1">Coaching Style</p>
+        <p class="text-[11px] text-base-600 mb-3">How the coach interacts with you</p>
+        <select id="coachingStyleSelect" class="coaching-style-select">
+          <option value="guide">Guide — Structures with fill-in-the-blank</option>
+          <option value="challenger">Challenger — Pushes deeper with questions</option>
+          <option value="listener">Listener — Listens first, feedback after</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/ui-controller.js"></script>
+</body>
+</html>
