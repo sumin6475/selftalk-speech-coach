@@ -61,7 +61,6 @@ Every session is saved with full transcript, checklist state, drill usage, and m
 | Database   | MongoDB Atlas (`motor` async driver)                                 |
 | AI / Voice | **Gemini 3.1 Flash Live** (real-time speech-to-speech)               |
 | AI / Text  | **Gemini 2.5 Flash** (summary, model script, translation, transform) |
-| Deploy     | Render (backend + static), GitHub auto-deploy                        |
 
 ---
 
@@ -96,13 +95,18 @@ Every session is saved with full transcript, checklist state, drill usage, and m
 
 ---
 
-## 🚀 Try It
+## 🚀 Run Locally
 
-**Live Demo:** [selftalk-speech-coach.onrender.com](https://selftalk-speech-coach.onrender.com)
+This app runs on your own machine — no hosted demo. Headphones recommended to prevent echo between your mic and speakers.
 
-> First load may take 30–60 seconds if the server is cold (free tier auto-sleeps after 15 min idle). Works best with headphones to prevent echo.
+### Prerequisites
 
-### Run Locally
+- Python 3.12+
+- Chrome or Edge (for microphone access on `localhost`)
+- A Google AI API key with billing enabled ([AI Studio](https://aistudio.google.com/apikey))
+- A MongoDB Atlas cluster (free tier is fine)
+
+### Setup
 
 ```bash
 git clone https://github.com/sumin6475/selftalk-speech-coach.git
@@ -119,23 +123,7 @@ GOOGLE_API_KEY=AIza...
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?appName=...
 ```
 
----
-
-## 📝 What I Learned Building This
-
-- **Real-time bidirectional audio** — Designing a session loop with three concurrent async tasks (mic in, AI out, timer) that cooperate without race conditions or dropped audio
-- **Prompt engineering for structured output** — Getting the LLM to produce a 250–400 word take-home speech script that uses _the user's own content_ rather than generating generic text
-- **Deployment for persistent connections** — Why Vercel doesn't work for WebSocket apps, and what Render/Fly offer instead
-- **Design tokens from day two** — Migrating 218 hardcoded colors into CSS variables so the next theme swap is one file, not 50
-
----
-
-## 🗺 Roadmap
-
-- [ ] Native mobile wrapper (iOS/Android) for on-the-go practice
-- [ ] Fine-grained delivery analytics (pace, filler count, pause placement)
-- [ ] Multi-language coaching (Korean, Japanese, Spanish)
-- [ ] Shareable public session links for peer feedback
+Open `http://localhost:8000` in your browser, allow microphone access, pick a scenario, and start a session.
 
 ---
 
