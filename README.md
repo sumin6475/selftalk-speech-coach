@@ -4,12 +4,6 @@
 
 **A real-time voice coach that listens to you practice, gives live feedback in conversation, and hands you a polished speech script at the end.**
 
-[🚀 Live Demo](https://selftalk-speech-coach.onrender.com) · [✨ Features](#-features) · [🛠 Tech Stack](#-tech-stack) · [🏗️ Architecture](#️-architecture)
-
-![Status](https://img.shields.io/badge/status-live-brightgreen)
-![Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20Gemini%20Live%20%7C%20MongoDB-6c5ce7)
-![Deploy](https://img.shields.io/badge/deploy-Render-46e3b7)
-
 <img src="./docs/screenshot.png" alt="SelfTalk Speech Coach Screenshot" width="800" />
 
 </div>
@@ -20,7 +14,7 @@
 
 SelfTalk is a **real-time voice speech coach**. You speak, the AI coach listens and replies — all over a low-latency audio stream. It holds a coaching conversation in your ear while you practice, then at the end it compiles everything you worked on into a complete, read-aloud-ready speech script you can rehearse with.
 
-Built for people who want to rehearse **investor pitches, paper presentations, or founding stories** — not just type notes, but actually *talk it out* with feedback.
+Built for people who want to rehearse **investor pitches, paper presentations, or founding stories** — not just type notes, but actually _talk it out_ with feedback.
 
 Defaults to English; switches to another language when the user speaks it.
 
@@ -29,38 +23,45 @@ Defaults to English; switches to another language when the user speaks it.
 ## ✨ Features
 
 ### 🎙️ Real-Time Voice Conversation
+
 Full bidirectional audio streaming with Gemini 3.1 Flash Live. You talk, the coach talks back. 16kHz mic in, 24kHz speech out, streamed over a single WebSocket with sub-second latency. No push-to-talk, no round trips — just conversation.
 
 ### 🗂️ Three Speech Scenarios
+
 Pre-loaded templates for **Persuade / Propose**, **Explain / Report**, and **Storytelling**, each with its own coaching prompt and structural framework (proposal → reasons → objection → CTA for persuade; scene → tension → action → lesson for storytelling, etc.).
 
 ### 📝 Reference Panel
+
 Paste your draft, notes, or script. One-click **Translate to English**, or transform it into **Easy** (speech-friendly) or **Professional** (polished) versions before practicing. The coach reads the reference and builds context around it.
 
 ### 📌 Live Tips During Practice
+
 Sticky-note-style reminders of the chosen scenario's structure stay visible during the session. Not a checklist — just a glanceable template so you don't lose your place mid-sentence.
 
 ### 🎯 Drill Expressions
+
 Add target phrases you want to practice ("as a result," "the key insight here") before the session. The coach detects them in your speech via transcript matching and counts each natural use. Per-session — each practice round starts fresh.
 
 ### 📄 Model Script — Your Take-Home
+
 The flagship output. After the session, the AI compiles **your own content** + **the coach's suggested phrasings** into a polished 250–400 word read-aloud script with cleaned-up delivery (no fillers, no fragments). Start-to-finish. Read it aloud to rehearse. Regenerate anytime.
 
 ### 📚 Session History
+
 Every session is saved with full transcript, checklist state, drill usage, and model script. Click any past session to review the chat log and the generated script side-by-side.
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Vanilla JS (ES modules), Tailwind CDN, Web Audio API + AudioWorklet |
-| Backend | Python 3.12, FastAPI, uvicorn, WebSocket |
-| Database | MongoDB Atlas (`motor` async driver) |
-| AI / Voice | **Gemini 3.1 Flash Live** (real-time speech-to-speech) |
-| AI / Text | **Gemini 2.5 Flash** (summary, model script, translation, transform) |
-| Deploy | Render (backend + static), GitHub auto-deploy |
+| Layer      | Technology                                                           |
+| ---------- | -------------------------------------------------------------------- |
+| Frontend   | Vanilla JS (ES modules), Tailwind CDN, Web Audio API + AudioWorklet  |
+| Backend    | Python 3.12, FastAPI, uvicorn, WebSocket                             |
+| Database   | MongoDB Atlas (`motor` async driver)                                 |
+| AI / Voice | **Gemini 3.1 Flash Live** (real-time speech-to-speech)               |
+| AI / Text  | **Gemini 2.5 Flash** (summary, model script, translation, transform) |
+| Deploy     | Render (backend + static), GitHub auto-deploy                        |
 
 ---
 
@@ -123,7 +124,7 @@ MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?appName=...
 ## 📝 What I Learned Building This
 
 - **Real-time bidirectional audio** — Designing a session loop with three concurrent async tasks (mic in, AI out, timer) that cooperate without race conditions or dropped audio
-- **Prompt engineering for structured output** — Getting the LLM to produce a 250–400 word take-home speech script that uses *the user's own content* rather than generating generic text
+- **Prompt engineering for structured output** — Getting the LLM to produce a 250–400 word take-home speech script that uses _the user's own content_ rather than generating generic text
 - **Deployment for persistent connections** — Why Vercel doesn't work for WebSocket apps, and what Render/Fly offer instead
 - **Design tokens from day two** — Migrating 218 hardcoded colors into CSS variables so the next theme swap is one file, not 50
 
@@ -135,16 +136,6 @@ MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?appName=...
 - [ ] Fine-grained delivery analytics (pace, filler count, pause placement)
 - [ ] Multi-language coaching (Korean, Japanese, Spanish)
 - [ ] Shareable public session links for peer feedback
-
----
-
-## 👤 Author
-
-**Sumin Kim** — building AI tools for self-reflection and better communication.
-
-- 🌐 [LinkedIn](https://linkedin.com/in/sumin6475)
-- 💻 [GitHub](https://github.com/sumin6475)
-- ✉️ sumin002@gmail.com
 
 ---
 
@@ -176,4 +167,4 @@ MIT
 
 ---
 
-*Last updated: 2026.04*
+_Last updated: 2026.04_
