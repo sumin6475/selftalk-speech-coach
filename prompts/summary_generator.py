@@ -56,14 +56,16 @@ Rules:
 - For unchecked items: explain what structural element was missing or weak.
 - strengths: 1-2 items. Reference specific moments from the transcript.
 - improvements: 1-2 items. Give concrete, actionable advice (not just "do better").
-- model_script: Write a COMPLETE, read-aloud-ready speech script the user can practice by speaking it aloud as-is. The goal is a polished final version of everything they worked on in the session. Rules:
-  - Follow the structural framework the coach guided through (for this scenario, the checklist items above define that structure — cover each checked/discussed element in order).
+- model_script: **WRITE THE COMPLETE SPEECH FROM START TO FINISH** — a full, polished, read-aloud-ready speech script on the user's actual topic. The user MUST be able to open this script, read it aloud from the first word to the last, and deliver a complete speech without adding or changing anything. This is the single most important field in the output. Rules:
+  - **Write the entire speech, not just fragments.** Include the opening (hook/greeting/scene-setting), ALL middle sections (every structural element from the checklist above — proposal, reasons, objections, examples, etc.), and the closing. Every beat of a real speech on this topic must be present.
+  - **Start from the very first word** a speaker would say (e.g., "Good morning, everyone." / "Let me tell you about..." / "I'm proposing...") and **end with the final word** (e.g., a clear call to action, a closing line, a question to the audience).
   - Use the USER'S OWN content and examples (their app name, their reasons, their specific data points, their story details) as the substance. Do NOT invent new facts, numbers, or claims the user did not provide.
   - Use the COACH'S specific suggested wordings verbatim where the coach offered them (e.g., "I'm proposing ___", "Let's finalize ___ by ___", specific transition phrases, analogies the coach crafted).
   - Clean up the user's delivery: remove fillers ("um", "uh", "like"), false starts, repeated phrases, and fragmentary grammar. Produce fluent, natural spoken English at a native-speaker level, while preserving the user's voice and intent.
+  - If the user's content is incomplete for a section the coach discussed (e.g., they skipped giving numbers), write a plausible placeholder in the user's voice based on what they did say, OR fill with a natural transition — but never leave a section empty.
   - Match the scenario's register (persuade = confident and benefit-framed; explain = clear and structured; storytelling = scene-driven and vivid).
-  - Length: aim for a speech that takes ~60–120 seconds to deliver aloud (roughly 150–300 words). Longer is OK if the content warrants it, but do not pad.
-  - Output plain prose only. No section labels like "Proposal:" or "Reason 1:". No markdown. No bullet points. Just the speech text.
-  - If the conversation was too short to build any meaningful content (e.g., user only said a few words), set model_script to null.
+  - **Minimum length: 200 words.** Target: 250–400 words (~90–150 seconds spoken). A 2–3 sentence script is NOT acceptable — that is a failure of this instruction.
+  - Output plain prose only. No section labels like "Proposal:" or "Reason 1:". No markdown. No bullet points. No line breaks between sections — use paragraph breaks naturally. Just the speech text as one flowing deliverable.
+  - Only set model_script to null if the user said essentially nothing in the session (e.g., literally just "hi" with no topic discussed). If a topic was discussed, you MUST write the full script, even if you need to flesh out thin areas based on the direction of the conversation.
 - Total output must be valid JSON only. No markdown, no explanation, no preamble.
 """
