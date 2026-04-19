@@ -56,11 +56,14 @@ Rules:
 - For unchecked items: explain what structural element was missing or weak.
 - strengths: 1-2 items. Reference specific moments from the transcript.
 - improvements: 1-2 items. Give concrete, actionable advice (not just "do better").
-- model_script: Compile ONLY the specific phrases, sentences, and expressions the coach explicitly suggested during the session into one cohesive read-aloud script. Rules:
-  - Use the coach's suggested wording VERBATIM — do not paraphrase or rewrite.
-  - Arrange suggestions in the logical speech order (not conversation order).
-  - Omit all coaching commentary (e.g. "try saying...", "you could say...") — include only the suggested speech content itself.
-  - Connect suggestions with minimal bridging words if needed for flow, but do not add new content.
-  - If the coach made no specific expression suggestions, set to null.
+- model_script: Write a COMPLETE, read-aloud-ready speech script the user can practice by speaking it aloud as-is. The goal is a polished final version of everything they worked on in the session. Rules:
+  - Follow the structural framework the coach guided through (for this scenario, the checklist items above define that structure — cover each checked/discussed element in order).
+  - Use the USER'S OWN content and examples (their app name, their reasons, their specific data points, their story details) as the substance. Do NOT invent new facts, numbers, or claims the user did not provide.
+  - Use the COACH'S specific suggested wordings verbatim where the coach offered them (e.g., "I'm proposing ___", "Let's finalize ___ by ___", specific transition phrases, analogies the coach crafted).
+  - Clean up the user's delivery: remove fillers ("um", "uh", "like"), false starts, repeated phrases, and fragmentary grammar. Produce fluent, natural spoken English at a native-speaker level, while preserving the user's voice and intent.
+  - Match the scenario's register (persuade = confident and benefit-framed; explain = clear and structured; storytelling = scene-driven and vivid).
+  - Length: aim for a speech that takes ~60–120 seconds to deliver aloud (roughly 150–300 words). Longer is OK if the content warrants it, but do not pad.
+  - Output plain prose only. No section labels like "Proposal:" or "Reason 1:". No markdown. No bullet points. Just the speech text.
+  - If the conversation was too short to build any meaningful content (e.g., user only said a few words), set model_script to null.
 - Total output must be valid JSON only. No markdown, no explanation, no preamble.
 """
