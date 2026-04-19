@@ -390,11 +390,11 @@ sm.onSummaryReady = (summary, title) => {
   // Summary rendering is beta-gated
   if (!betaSettings.summary) return;
   if (state === "complete" || !chatLogView.classList.contains("hidden")) {
-    renderSummary(summary);
+    renderSummary(summary, sm.currentSession?.id);
   }
 };
 
-function renderSummary(summary) {
+function renderSummary(summary, sessionId) {
   if (!summary) return;
   // Remove any existing summary (inside checklistItems so it gets cleared on next load)
   clearSummary();
@@ -404,6 +404,42 @@ function renderSummary(summary) {
 
   // Divider
   container.innerHTML += '<div style="border-top: 1px solid var(--border-default); margin: 16px 0;"></div>';
+
+  // Regenerate button (if sessionId known)
+  if (sessionId) {
+    const regenRow = document.createElement("div");
+    regenRow.style.cssText = "display:flex; justify-content:flex-end; margin-bottom:8px;";
+    regenRow.innerHTML = `<button class="summary-regen-btn" style="font-size:11px; color:var(--accent); background:none; border:1px solid var(--accent); padding:3px 10px; border-radius:6px; cursor:pointer;">Regenerate</button>`;
+    regenRow.querySelector(".summary-regen-btn").addEventListener("click", async (e) => {
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = "Regenerating...";
+      btn.style.opacity = "0.6";
+      try {
+        const res = await fetch(`/api/sessions/${sessionId}/generate-summary`, { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+          alert(`Regenerate failed: ${data.error || res.status}`);
+          btn.disabled = false;
+          btn.textContent = "Regenerate";
+          btn.style.opacity = "";
+          return;
+        }
+        if (data.title) {
+          chatLogTitle.textContent = data.title;
+          const el = chatList.querySelector(`[data-session-id="${sessionId}"] .session-title-text`);
+          if (el) el.textContent = data.title;
+        }
+        renderSummary(data.summary, sessionId);
+      } catch (err) {
+        alert(`Regenerate failed: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = "Regenerate";
+        btn.style.opacity = "";
+      }
+    });
+    container.appendChild(regenRow);
+  }
 
   // Checklist reasons section — plain text, no check icons
   if (summary.checklist_reasons?.length) {
@@ -510,7 +546,7 @@ function renderGenerateSummaryButton(sessionId) {
         if (el) el.textContent = data.title;
       }
       clearSummary();
-      renderSummary(data.summary);
+      renderSummary(data.summary, sessionId);
     } catch (e) {
       alert(`Summary generation failed: ${e.message}`);
       btn.disabled = false;
@@ -886,7 +922,7 @@ async function loadSession(id) {
 
   // Render summary or show generate button
   if (data.summary && betaSettings.summary) {
-    renderSummary(data.summary);
+    renderSummary(data.summary, id);
   } else if (betaSettings.summary && data.transcripts?.length > 0) {
     renderGenerateSummaryButton(id);
   }
